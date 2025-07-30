@@ -87,14 +87,6 @@ const login = async (req, res) => {
             });
         }
 
-        // Check if account is active
-        if (!user.isActive) {
-            return res.status(401).json({
-                success: false,
-                message: 'Account is deactivated'
-            });
-        }
-
         // Compare password
         const isValidPassword = await user.comparePassword(password);
         if (!isValidPassword) {
