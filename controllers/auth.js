@@ -1,5 +1,7 @@
 const User = require('../models/user');
 const { generateTokens } = require('../services/jwt');
+const { sendEmail } = require('../services/email.service');
+const { jwt, decode } = require('jsonwebtoken');
 
 // Register user
 const register = async (req, res) => {
@@ -30,6 +32,15 @@ const register = async (req, res) => {
             email,
             password,
             profileImage
+        });
+
+        const emailVerificationToken = await user.generateEmailVerificationToken();
+
+        await sendEmail({
+            to: user.email,
+            subject: 'Email Verification',
+            userName: user.displayName,
+            url: emailVerificationToken,
         });
 
         await user.save();
@@ -88,10 +99,10 @@ const login = async (req, res) => {
         }
 
         // Check if account is active
-        if (!user.isActive) {
+        if (!user.emailVerified) {
             return res.status(401).json({
                 success: false,
-                message: 'Account is deactivated'
+                message: 'Please verify your email to activate your account'
             });
         }
 
@@ -194,9 +205,211 @@ const getCurrentUser = async (req, res) => {
     }
 };
 
+// Forgot password
+const forgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({
+                success: false,
+                message: 'Email is required'
+            });
+        }
+
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found with this email'
+            });
+        }
+
+        const resetToken = await user.generatePasswordResetToken();
+        await user.save();
+
+        await sendEmail({
+            to: user.email,
+            subject: 'Password Reset',
+            userName: user.displayName,
+            token: resetToken,
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: 'Password reset link sent to your email'
+        });
+
+    } catch (error) {
+        console.error('Forgot password error:', error.message);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to send password reset email',
+            error: error.message
+        });
+    }
+};
+
+// Reset password
+const resetPassword = async (req, res) => {
+    try {
+        const { email, token, newPassword } = req.body;
+
+        if (!email || !token || !newPassword) {
+            return res.status(400).json({
+                success: false,
+                message: 'Email, token, and new password are required'
+            });
+        }
+
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found with this email'
+            });
+        }
+
+        const isValidToken = await user.comparePasswordResetToken(token);
+
+        if (!isValidToken) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid or expired password reset token'
+            });
+        }
+
+        if (Date.now() > user.passwordResetExpires) {
+            return res.status(400).json({
+                success: false,
+                message: 'Password reset token has expired'
+            });
+        }
+
+        user.password = newPassword;
+        user.passwordResetToken = undefined;
+        user.passwordResetExpires = undefined;
+        await user.save();
+
+        await sendEmail({
+            to: user.email,
+            subject: 'Password Reset Successful',
+            userName: user.displayName
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: 'Password has been reset successfully'
+        });
+
+    } catch (error) {
+        console.error('Reset password error:', error.message);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to reset password',
+            error: error.message
+        });
+    }
+}
+
+const verifyEmail = async (req, res) => {
+    try {
+        const { token } = req.query;
+        if (!token) {
+            return res.status(400).json({
+                success: false,
+                message: 'Token is required for email verification'
+            });
+        }
+        const { email, emailVerificationToken } = decode(token);
+        if (!email || !emailVerificationToken) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid token format'
+            });
+        }
+
+        const user = await User.findOne({ email, emailVerificationToken });
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found or token is invalid'
+            });
+        }
+
+        user.emailVerified = true;
+        user.emailVerificationToken = undefined;
+        await user.save();
+
+        res.status(200).send(
+            require('../helper/html.helper').html(user.displayName)
+        )
+    }
+    catch (error) {
+        console.error('Email verification error:', error.message);
+        return res.status(400).json({
+            success: false,
+            message: 'Invalid or expired email verification token'
+        });
+    }
+}
+
+const resendVerification = async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email) {
+            return res.status(400).json({
+                success: false,
+                message: 'Email is required'
+            });
+        }
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found with this email'
+            });
+        }
+
+        if (user.emailVerified) {
+            return res.status(400).json({
+                success: false,
+                message: 'Email is already verified'
+            });
+        }
+
+        const emailVerificationToken = await user.generateEmailVerificationToken();
+
+        await sendEmail({
+            to: user.email,
+            subject: 'Resend Email Verification',
+            userName: user.displayName,
+            url: emailVerificationToken,
+        });
+        res.status(200).json({
+            success: true,
+            message: 'Verification email sent successfully'
+        });
+    }
+    catch (error) {
+        console.error('Resend verification error:', error.message);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to resend verification email',
+            error: error.message
+        });
+    }
+}
+
+
 module.exports = {
     register,
     login,
     logout,
-    getCurrentUser
+    forgotPassword,
+    resetPassword,
+    getCurrentUser,
+    verifyEmail,
+    resendVerification
 };
