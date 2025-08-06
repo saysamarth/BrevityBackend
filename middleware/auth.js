@@ -21,6 +21,7 @@ const authMiddleware = async (req, res, next) => {
                 message: 'Token is not valid - user not found'
             });
         }
+<<<<<<< HEAD
 
         if (!user.emailVerified) {
             return res.status(403).json({
@@ -68,6 +69,8 @@ const authMiddlewareAllowUnverified = async (req, res, next) => {
             });
         }
 
+=======
+>>>>>>> c6c912b11d978b8b51c8b63f322bfcc3ce95672f
         req.user = user;
         next();
     } catch (error) {
@@ -98,7 +101,7 @@ const optionalAuth = async (req, res, next) => {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         const user = await User.findById(decoded.userId).select('-password');
 
-        req.user = user && user.isActive ? user : null;
+        req.user = user ? user : null;
         next();
     } catch (error) {
         req.user = null;

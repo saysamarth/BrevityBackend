@@ -98,6 +98,7 @@ const login = async (req, res) => {
             });
         }
 
+<<<<<<< HEAD
         // Check if account is active
         if (!user.emailVerified) {
             return res.status(401).json({
@@ -106,6 +107,8 @@ const login = async (req, res) => {
             });
         }
 
+=======
+>>>>>>> c6c912b11d978b8b51c8b63f322bfcc3ce95672f
         // Compare password
         const isValidPassword = await user.comparePassword(password);
         if (!isValidPassword) {
