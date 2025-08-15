@@ -1,17 +1,17 @@
 const nodemailer = require('nodemailer');
 const fs = require('fs');
+const path = require('path');
 
 // Email service configuration
 const transporter = nodemailer.createTransport({
     host: process.env.EMAIL_HOST,
     port: process.env.EMAIL_PORT,
-    secure: process.env.EMAIL_SECURE === 'true', // true for 465, false for other ports
+    secure: process.env.EMAIL_SECURE === 'true',
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
     }
 });
-
 
 async function sendEmail({ to, subject, userName, token, url }) {
     try {
@@ -24,12 +24,14 @@ async function sendEmail({ to, subject, userName, token, url }) {
             subject,
         };
         if (!token && !url) {
-            let fullHtml = fs.readFileSync('services/templates/reset-successful.html', 'utf8');
+            // Use path.join to create an absolute path
+            let fullHtml = fs.readFileSync(path.join(__dirname, 'templates', 'reset-successful.html'), 'utf8');
             fullHtml = fullHtml.replace('{{userName}}', userName);
             mailOptions.html = fullHtml;
         }
         if (token) {
-            let fullHtml = fs.readFileSync('services/templates/reset-password.html', 'utf8');
+            // Use path.join to create an absolute path
+            let fullHtml = fs.readFileSync(path.join(__dirname, 'templates', 'reset-password.html'), 'utf8');
             fullHtml = fullHtml.replace('{{userName}}', userName);
             fullHtml = fullHtml.replace('{{token}}', token);
             mailOptions.html = fullHtml;
@@ -37,7 +39,8 @@ async function sendEmail({ to, subject, userName, token, url }) {
         if (url) {
             const _url = `${process.env.DEPLOYMENT_URL}/auth/verify-email?token=${url}`;
             const safeUrl = _url.replace(/&/g, '&amp;');
-            let fullHtml = fs.readFileSync('services/templates/email-verification.html', 'utf8');
+            // Use path.join to create an absolute path
+            let fullHtml = fs.readFileSync(path.join(__dirname, 'templates', 'email-verification.html'), 'utf8');
             fullHtml = fullHtml.replace('{{userName}}', userName);
             fullHtml = fullHtml.replaceAll('{{verificationLink}}', safeUrl);
             mailOptions.html = fullHtml;
