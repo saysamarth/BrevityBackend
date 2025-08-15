@@ -60,8 +60,7 @@ const connectDB = async () => {
         await mongoose.connect(process.env.MONGODB_URI, {
             useNewUrlParser: true,
             useUnifiedTopology: true,
-            serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
-            socketTimeoutMS: 45000, // Close sockets after 45s of inactivity
+            serverSelectionTimeoutMS: 30000
         });
         isConnected = true;
         console.log('Connected to MongoDB');
@@ -70,7 +69,6 @@ const connectDB = async () => {
     }
 };
 
-// Connect to database
 connectDB();
 
 // Passport configuration
