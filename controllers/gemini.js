@@ -12,27 +12,27 @@ const rateLimit = (maxRequests = 60, timeWindowMs = 60000) => {
     return (req, res, next) => {
         const clientId = req.user?.id || req.ip || 'default';
         const now = Date.now();
-        
+
         if (!rateLimitStore.has(clientId)) {
             rateLimitStore.set(clientId, []);
         }
-        
+
         const requests = rateLimitStore.get(clientId);
-        
+
         // Remove old requests outside the time window
         const validRequests = requests.filter(time => now - time < timeWindowMs);
-        
+
         if (validRequests.length >= maxRequests) {
-            return res.status(429).json({ 
+            return res.status(429).json({
                 success: false,
                 error: 'Rate limit exceeded',
                 message: `Maximum ${maxRequests} requests per ${timeWindowMs / 1000} seconds`
             });
         }
-        
+
         validRequests.push(now);
         rateLimitStore.set(clientId, validRequests);
-        
+
         next();
     };
 };
@@ -42,19 +42,19 @@ const generateContent = async (req, res) => {
     try {
         const { input, prompt } = req.body;
         const userId = req.user?.id;
-        
+
         if (!input && !prompt) {
-            return res.status(400).json({ 
+            return res.status(400).json({
                 success: false,
-                error: 'Input or prompt is required' 
+                error: 'Input or prompt is required'
             });
         }
-        
+
         const textInput = input || prompt;
-        
+
         // Compress and clean the prompt
         const compressedPrompt = textInput.replace(/\s+/g, ' ').trim();
-        
+
         const payload = {
             contents: [{
                 parts: [{ text: compressedPrompt }]
@@ -84,7 +84,7 @@ const generateContent = async (req, res) => {
                 }
             ]
         };
-        
+
         const response = await axios.post(
             `${GEMINI_BASE_URL}?key=${GEMINI_API_KEY}`,
             payload,
@@ -95,14 +95,14 @@ const generateContent = async (req, res) => {
                 timeout: 30000 // 30 seconds
             }
         );
-        
+
         // Process the response
         const data = response.data;
-        if (data.candidates?.length > 0 && 
+        if (data.candidates?.length > 0 &&
             data.candidates[0].content?.parts?.length > 0) {
             const generatedText = data.candidates[0].content.parts[0].text;
-            
-            res.json({ 
+
+            res.json({
                 success: true,
                 data: {
                     text: generatedText,
@@ -112,58 +112,58 @@ const generateContent = async (req, res) => {
                 timestamp: new Date().toISOString()
             });
         } else {
-            res.status(500).json({ 
+            res.status(500).json({
                 success: false,
                 error: 'Empty response from Gemini API',
                 message: 'No content generated'
             });
         }
-        
+
     } catch (error) {
         console.error('Gemini API Error:', error.response?.data || error.message);
-        
+
         // Handle specific error codes
         if (error.response) {
             const status = error.response.status;
             const errorData = error.response.data;
-            
+
             switch (status) {
                 case 429:
-                    res.status(429).json({ 
+                    res.status(429).json({
                         success: false,
                         error: 'Rate limit exceeded',
                         message: 'Gemini API rate limit exceeded. Please try again later.'
                     });
                     break;
                 case 403:
-                    res.status(403).json({ 
+                    res.status(403).json({
                         success: false,
                         error: 'API key quota exceeded',
                         message: 'Gemini API quota exceeded.'
                     });
                     break;
                 case 400:
-                    res.status(400).json({ 
+                    res.status(400).json({
                         success: false,
                         error: 'Invalid request',
                         message: errorData?.error?.message || 'Bad request to Gemini API'
                     });
                     break;
                 default:
-                    res.status(500).json({ 
+                    res.status(500).json({
                         success: false,
                         error: 'Gemini API error',
                         message: errorData?.error?.message || error.message
                     });
             }
         } else if (error.code === 'ECONNABORTED') {
-            res.status(408).json({ 
+            res.status(408).json({
                 success: false,
                 error: 'Request timeout',
                 message: 'Request to Gemini API timed out'
             });
         } else {
-            res.status(500).json({ 
+            res.status(500).json({
                 success: false,
                 error: 'Internal server error',
                 message: 'Failed to process request'

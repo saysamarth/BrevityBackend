@@ -3,123 +3,161 @@ const axios = require('axios');
 const NEWS_API_KEY = process.env.NEWS_API_KEY;
 const NEWS_BASE_URL = 'https://newsapi.org/v2';
 
-// Axios instance
-const newsApiClient = axios.create({
-    baseURL: NEWS_BASE_URL,
-    headers: {
-        'X-Api-Key': NEWS_API_KEY,
-        'User-Agent': 'Axios/1.5.0' // simple UA
-    },
-    timeout: 10000
-});
-
-// Helper: Make API requests
-const makeNewsRequest = async (endpoint, params = {}) => {
+// Helper function to handle API requests
+const makeNewsRequest = async (url, params) => {
     try {
-        const response = await newsApiClient.get(endpoint, { params });
+        const response = await axios.get(url, { params });
         return response.data;
     } catch (error) {
-        const status = error.response?.status;
-        let message = error.message || 'Unknown error';
-
-        if (status === 401) message = 'Invalid API key';
-        if (status === 429) message = 'Rate limit exceeded';
-        if (status === 500) message = 'News service temporarily unavailable';
-
-        throw { status: status || 500, message };
+        console.error('News API Error:', error.response?.data || error.message);
+        throw {
+            status: error.response?.status || 500,
+            message: error.response?.data?.message || error.message
+        };
     }
 };
 
-// --- Endpoints ---
-
-// Trending news (Top Headlines)
+// Fetch trending news
 const getTrendingNews = async (req, res) => {
     try {
-        const { page = 1, pageSize = 10 } = req.query;
-        const data = await makeNewsRequest('/top-headlines', {
+        const { page, pageSize } = req.query;
+
+        const data = await makeNewsRequest(`${NEWS_BASE_URL}/top-headlines`, {
             country: 'us',
+            category: 'general',
             page: parseInt(page),
-            pageSize: parseInt(pageSize)
+            pageSize: parseInt(pageSize),
+            apiKey: NEWS_API_KEY
         });
 
-        res.json({ success: true, data, timestamp: new Date().toISOString() });
+        res.json({
+            success: true,
+            data: data,
+            timestamp: new Date().toISOString()
+        });
     } catch (error) {
-        res.status(error.status).json({ success: false, message: error.message });
+        res.status(error.status || 500).json({
+            success: false,
+            error: 'Failed to fetch trending news',
+            message: error.message
+        });
     }
 };
 
-// News by category
+// Fetch news by category
 const getNewsByCategory = async (req, res) => {
     try {
         const { category } = req.params;
-        const { page = 1, pageSize = 10 } = req.query;
-        const data = await makeNewsRequest('/top-headlines', {
+        const { page, pageSize } = req.query;
+
+        const data = await makeNewsRequest(`${NEWS_BASE_URL}/top-headlines`, {
             country: 'us',
-            category,
+            category: category,
             page: parseInt(page),
-            pageSize: parseInt(pageSize)
+            pageSize: parseInt(pageSize),
+            apiKey: NEWS_API_KEY
         });
 
-        res.json({ success: true, data, timestamp: new Date().toISOString() });
+        res.json({
+            success: true,
+            data: data,
+            timestamp: new Date().toISOString()
+        });
     } catch (error) {
-        res.status(error.status).json({ success: false, message: error.message });
+        res.status(error.status || 500).json({
+            success: false,
+            error: `Failed to fetch ${req.params.category} news`,
+            message: error.message
+        });
     }
 };
 
-// General news
+// Fetch general news
 const getGeneralNews = async (req, res) => {
     try {
-        const { page = 1, pageSize = 10 } = req.query;
-        const data = await makeNewsRequest('/top-headlines', {
+        const { page, pageSize } = req.query;
+
+        const data = await makeNewsRequest(`${NEWS_BASE_URL}/top-headlines`, {
             country: 'us',
             page: parseInt(page),
-            pageSize: parseInt(pageSize)
+            pageSize: parseInt(pageSize),
+            apiKey: NEWS_API_KEY
         });
 
-        res.json({ success: true, data, timestamp: new Date().toISOString() });
+        res.json({
+            success: true,
+            data: data,
+            timestamp: new Date().toISOString()
+        });
     } catch (error) {
-        res.status(error.status).json({ success: false, message: error.message });
+        res.status(error.status || 500).json({
+            success: false,
+            error: 'Failed to fetch general news',
+            message: error.message
+        });
     }
 };
 
-// Politics news using 'everything'
+// Fetch politics news using everything endpoint
 const getPoliticsNews = async (req, res) => {
     try {
-        const { page = 1, pageSize = 10 } = req.query;
-        const data = await makeNewsRequest('/everything', {
+        const { page, pageSize } = req.query;
+
+        const data = await makeNewsRequest(`${NEWS_BASE_URL}/everything`, {
             q: 'politics',
             language: 'en',
             sortBy: 'publishedAt',
             page: parseInt(page),
-            pageSize: parseInt(pageSize)
+            pageSize: parseInt(pageSize),
+            apiKey: NEWS_API_KEY
         });
 
-        res.json({ success: true, data, timestamp: new Date().toISOString() });
+        res.json({
+            success: true,
+            data: data,
+            timestamp: new Date().toISOString()
+        });
     } catch (error) {
-        res.status(error.status).json({ success: false, message: error.message });
+        res.status(error.status || 500).json({
+            success: false,
+            error: 'Failed to fetch politics news',
+            message: error.message
+        });
     }
 };
 
 // Search news
 const searchNews = async (req, res) => {
     try {
-        const { q: query, page = 1, pageSize = 10 } = req.query;
+        const { q: query, page, pageSize } = req.query;
 
         if (!query) {
-            return res.status(400).json({ success: false, message: 'Search query is required' });
+            return res.status(400).json({
+                success: false,
+                error: 'Search query is required'
+            });
         }
 
-        const data = await makeNewsRequest('/everything', {
+        const data = await makeNewsRequest(`${NEWS_BASE_URL}/everything`, {
             q: query,
             language: 'en',
             sortBy: 'relevancy',
             page: parseInt(page),
-            pageSize: parseInt(pageSize)
+            pageSize: parseInt(pageSize),
+            apiKey: NEWS_API_KEY
         });
 
-        res.json({ success: true, data, timestamp: new Date().toISOString() });
+        res.json({
+            success: true,
+            data: data,
+            timestamp: new Date().toISOString()
+        });
     } catch (error) {
-        res.status(error.status).json({ success: false, message: error.message });
+        res.status(error.status || 500).json({
+            success: false,
+            error: 'Failed to search news',
+            message: error.message
+        });
     }
 };
 
