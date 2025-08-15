@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Verification</title>
+</head>
+
+<body>
+    <h1>Email Verification</h1>
+    <p>Hi {{userName}},</p>  
+    <p>Welcome to Brevity! Please click the button below to verify your email address:</p>
+    <a href="{{verificationLink}}"
+        style="display: inline-block; background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;"
+        target="_blank">
+        Verify Email
+    </a>
+
+    <p>If the button above does not work, you can also click the link below:</p>
+    <p><a href="{{verificationLink}}" target="_blank">{{verificationLink}}</a></p>
+
+    <p>The link is valid for next 1 hour.</p>
+    <p>Thank you!</p>
+</body>
+<footer>
+    <p>&copy; Brevity. All rights reserved.</p>
+</footer>
+
+</html>

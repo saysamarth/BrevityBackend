@@ -105,7 +105,49 @@ const deleteProfileImage = async (req, res) => {
     }
 };
 
+//add delete account feature
+const deleteUserAccount = async(req,res)=>{
+    try{
+        const userID = req.user._id;
+        const {password} = req.body;
+
+        const user = await User.findById(userID).select('+password');
+        if(!user){
+            return res.status(404).json({
+                success:false,
+                message:"User not found"
+            });
+        }
+
+        //verification of password
+        const passwordMatch = await user.comparePassword(password);
+        if(!passwordMatch){
+            return res.status(401).json({
+                success:false,
+                message:'incorrect password'
+            });
+        }
+
+        //delete profile
+        await User.findByIdAndDelete(userID);
+        res.status(200).json({
+            success:true,
+            message:`account deletion successful for ${user.displayName}`
+        })
+
+
+    }catch(err){
+        console.error(err);
+        res.status(500).json({
+            success:false,
+            message:'Failed to delete account, please retry',
+            error:err
+        })
+    }
+}
+
 module.exports = {
     updateProfile,
-    deleteProfileImage
+    deleteProfileImage,
+    deleteUserAccount
 };

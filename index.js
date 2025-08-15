@@ -8,6 +8,12 @@ const rateLimit = require('express-rate-limit');
 // Import routes
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
+const bookmarkRoutes = require('./routes/bookmark');
+const newsRoutes = require('./routes/news');
+const passport = require('passport');
+
+// Import controllers
+const { verifyEmail } = require('./controllers/auth');
 
 // Import middleware
 const { errorHandler } = require('./middleware/error');
@@ -19,6 +25,8 @@ app.use(helmet());
 app.use(compression());
 
 // Rate limiting
+app.set('trust proxy', 1);
+
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 100, // limit each IP to 100 requests per windowMs
@@ -43,12 +51,19 @@ mongoose.connect(process.env.MONGODB_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
 })
-    .then(() => console.log('Connected to MongoDB'))
-    .catch((err) => console.error('MongoDB connection error:', err));
+.then(() => console.log('Connected to MongoDB'))
+.catch((err) => console.error('MongoDB connection error:', err));
+
+// Passport configuration
+require('./config/passport'); 
+app.use(passport.initialize());
+
 
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/bookmarks', bookmarkRoutes);
+app.use('/api/news', newsRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -59,6 +74,9 @@ app.get('/api/health', (req, res) => {
         timestamp: new Date().toISOString()
     });
 });
+
+// Email verification route
+app.get('/auth/verify-email', verifyEmail);
 
 // Error handling middleware (must be last)
 app.use(errorHandler);
