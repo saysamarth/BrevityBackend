@@ -51,11 +51,11 @@ mongoose.connect(process.env.MONGODB_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
 })
-.then(() => console.log('Connected to MongoDB'))
-.catch((err) => console.error('MongoDB connection error:', err));
+    .then(() => console.log('Connected to MongoDB'))
+    .catch((err) => console.error('MongoDB connection error:', err));
 
 // Passport configuration
-require('./config/passport'); 
+require('./config/passport');
 app.use(passport.initialize());
 
 
@@ -87,12 +87,6 @@ app.use('*', (req, res) => {
         success: false,
         message: 'Route not found'
     });
-});
-
-const PORT = process.env.PORT || 5001;
-
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
 });
 
 module.exports = app;
