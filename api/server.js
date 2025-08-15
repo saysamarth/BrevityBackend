@@ -1,4 +1,4 @@
-const app = require('../index');
+const app = require('../index.js');
 
 module.exports = (req, res) => {
     app(req, res);
