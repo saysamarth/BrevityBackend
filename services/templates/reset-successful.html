@@ -1,18 +1,278 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Password Successfully Reset</title>
+    <style>
+        :root {
+            --primary-bg: #0d1b2a;
+            --secondary-bg: #1b263b;
+            --accent: #415a77;
+            --text-color: #e0e1dd;
+            --heading-color: #778da9;
+            --border: #415a77;
+            --ring: rgba(65, 90, 119, 0.25);
+            --success-color: #10b981;
+            --success-bg: rgba(16, 185, 129, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            height: 100%;
+        }
+
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica,
+                Arial, "Apple Color Emoji", "Segoe UI Emoji";
+            color: var(--text-color);
+            background: linear-gradient(135deg, var(--primary-bg) 0%, #111827 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 640px;
+        }
+
+        .card {
+            background: var(--secondary-bg);
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 10px 30px rgba(2, 6, 23, 0.45);
+            border: 1px solid var(--border);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .brand-mark {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--accent), var(--heading-color));
+            box-shadow: 0 10px 20px var(--ring),
+                inset 0 -2px 6px rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .brand-mark img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 5px;
+        }
+
+        .brand-name {
+            font-weight: 700;
+            letter-spacing: 0.4px;
+            color: var(--heading-color);
+            font-size: 18px;
+        }
+
+        .success-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 12px 0 8px;
+        }
+
+        .success-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--success-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            animation: scaleIn 0.5s ease-out;
+        }
+
+        .success-icon svg {
+            width: 18px;
+            height: 18px;
+            color: white;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 28px;
+            line-height: 1.2;
+            color: var(--success-color);
+            font-weight: 700;
+        }
+
+        p {
+            margin: 10px 0;
+            color: var(--text-color);
+            line-height: 1.5;
+        }
+
+        .muted {
+            color: var(--heading-color);
+        }
+
+        .highlight {
+            color: var(--success-color);
+            font-weight: 600;
+        }
+
+        .success-message {
+            margin: 20px 0;
+            padding: 18px 22px;
+            border-radius: 12px;
+            border: 1px solid var(--success-color);
+            background: var(--success-bg);
+            text-align: center;
+        }
+
+        .cta-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--success-color);
+            color: white;
+            text-decoration: none;
+            padding: 14px 28px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.2s ease;
+            margin: 20px 0;
+            border: none;
+            cursor: pointer;
+        }
+
+        .cta-button:hover {
+            background: #0d9668;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .cta-button svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .divider {
+            height: 1px;
+            background: var(--border);
+            margin: 20px 0;
+        }
+
+        .footer {
+            text-align: center;
+            color: var(--heading-color);
+            margin-top: 18px;
+            font-size: 12px;
+        }
+
+        @keyframes scaleIn {
+            from {
+                transform: scale(0);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .card {
+                padding: 22px;
+                border-radius: 14px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .success-header {
+                flex-direction: column;
+                text-align: center;
+                gap: 8px;
+            }
+
+            .cta-button {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
 </head>
+
 <body>
-    <h1>Password Changed Successfully</h1>
-    <p>Hi {{userName}},</p>
-    <p>Your password has been successfully updated. If you made this change, no further action is required.</p>
-    <p>If you did <strong>not</strong> request this change, please contact our support team immediately or reset your password again to secure your account.</p>
-    <p>Thank you for using Brevity!</p>
+    <div class="container">
+        <div class="card">
+            <div class="brand">
+                <div class="brand-mark">
+                    <img src="./icons/icon.png" alt="logo" />
+                </div>
+                <div class="brand-name">Brevity</div>
+            </div>
+
+            <div class="success-header">
+                <div class="success-icon">
+                    <svg fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd"
+                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                            clip-rule="evenodd"></path>
+                    </svg>
+                </div>
+                <h1>Password Reset Successful!</h1>
+            </div>
+
+            <p>Hi <span class="highlight">{{userName}}</span>,</p>
+
+            <div class="success-message">
+                <p class="muted" style="margin: 0;">
+                    Your password has been successfully updated and your account is now secure.
+                </p>
+            </div>
+
+            <p>If you made this change, no further action is required.</p>
+
+            <p>If you did <strong>not</strong> request this change, please contact our support team immediately or reset
+                your password again to secure your account.</p>
+
+            <a href="/login" class="cta-button">
+                <svg fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd"
+                        d="M3 3a1 1 0 011 1v12a1 1 0 11-2 0V4a1 1 0 011-1zm7.707 3.293a1 1 0 010 1.414L9.414 9H17a1 1 0 110 2H9.414l1.293 1.293a1 1 0 01-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0z"
+                        clip-rule="evenodd"></path>
+                </svg>
+                Go to Login
+            </a>
+
+            <div class="divider"></div>
+
+            <p class="muted">
+                Thank you for using Brevity!
+            </p>
+        </div>
+
+        <div class="footer">
+            <p>&copy; Brevity. All rights reserved.</p>
+        </div>
+    </div>
 </body>
-<footer>
-    <p>&copy; Brevity. All rights reserved.</p>
-</footer>
+
 </html>
