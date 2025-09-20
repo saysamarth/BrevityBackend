@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
+const { isTokenBlacklisted } = require('../services/jwt');
 
 const authMiddleware = async (req, res, next) => {
     try {
@@ -13,6 +14,15 @@ const authMiddleware = async (req, res, next) => {
         }
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        
+        // Check if token is blacklisted
+        if (decoded.jti && await isTokenBlacklisted(decoded.jti)) {
+            return res.status(401).json({
+                success: false,
+                message: 'Token has been revoked'
+            });
+        }
+        
         const user = await User.findById(decoded.userId).select('-password');
 
         if (!user) {
@@ -30,6 +40,7 @@ const authMiddleware = async (req, res, next) => {
         }
 
         req.user = user;
+        req.token = token; // Store token for potential blacklisting
         next();
     } catch (error) {
         if (error.name === 'TokenExpiredError') {
@@ -59,6 +70,15 @@ const authMiddlewareAllowUnverified = async (req, res, next) => {
         }
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        
+        // Check if token is blacklisted
+        if (decoded.jti && await isTokenBlacklisted(decoded.jti)) {
+            return res.status(401).json({
+                success: false,
+                message: 'Token has been revoked'
+            });
+        }
+        
         const user = await User.findById(decoded.userId).select('-password');
 
         if (!user) {
@@ -69,6 +89,7 @@ const authMiddlewareAllowUnverified = async (req, res, next) => {
         }
 
         req.user = user;
+        req.token = token; // Store token for potential blacklisting
         next();
     } catch (error) {
         if (error.name === 'TokenExpiredError') {
@@ -96,9 +117,17 @@ const optionalAuth = async (req, res, next) => {
         }
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        
+        // Check if token is blacklisted
+        if (decoded.jti && await isTokenBlacklisted(decoded.jti)) {
+            req.user = null;
+            return next();
+        }
+        
         const user = await User.findById(decoded.userId).select('-password');
 
         req.user = user ? user : null;
+        if (user) req.token = token;
         next();
     } catch (error) {
         req.user = null;

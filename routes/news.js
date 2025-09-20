@@ -5,10 +5,15 @@ const {
     getNewsByCategory,
     getGeneralNews,
     getPoliticsNews,
-    searchNews
+    searchNews,
+    getNewsById,
+    getShareableLink
 } = require('../controllers/news');
 
 const router = express.Router();
+
+// Get shareable link
+router.post('/share', authMiddleware, getShareableLink);
 
 // Public routes (no authentication required)
 router.get('/trending', getTrendingNews);
@@ -17,11 +22,7 @@ router.get('/category/:category', getNewsByCategory);
 router.get('/politics', getPoliticsNews);
 router.get('/search', searchNews);
 
-// Protected routes (authentication required) - if you want to track user activity
-// router.get('/trending', authMiddleware, getTrendingNews);
-// router.get('/general', authMiddleware, getGeneralNews);
-// router.get('/category/:category', authMiddleware, getNewsByCategory);
-// router.get('/politics', authMiddleware, getPoliticsNews);
-// router.get('/search', authMiddleware, searchNews);
+// Get news by ID
+router.get('/:newsId', authMiddleware,getNewsById);
 
 module.exports = router;

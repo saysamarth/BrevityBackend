@@ -1,5 +1,5 @@
 const User = require('../models/user');
-const { generateTokens } = require('../services/jwt');
+const { generateTokens, blacklistToken } = require('../services/jwt');
 const { sendEmail } = require('../services/email.service');
 const { jwt, decode } = require('jsonwebtoken');
 const { verifyGoogleToken } = require('../config/passport');
@@ -158,17 +158,37 @@ const logout = async (req, res) => {
     try {
         const { refreshToken } = req.body;
         const userId = req.user._id;
+        const currentToken = req.token;
 
         if (refreshToken) {
             // Remove specific refresh token
             await User.findByIdAndUpdate(userId, {
                 $pull: { refreshTokens: { token: refreshToken } }
             });
+            
+            // Blacklist the specific refresh token
+            await blacklistToken(refreshToken, userId, 'logout');
         } else {
             // Remove all refresh tokens (logout from all devices)
+            const user = await User.findById(userId).select('refreshTokens');
+            
+            // Blacklist all existing refresh tokens
+            if (user && user.refreshTokens.length > 0) {
+                const blacklistPromises = user.refreshTokens.map(tokenObj => 
+                    blacklistToken(tokenObj.token, userId, 'logout')
+                );
+                await Promise.allSettled(blacklistPromises);
+            }
+            
+            // Clear all refresh tokens from user document
             await User.findByIdAndUpdate(userId, {
                 $set: { refreshTokens: [] }
             });
+        }
+        
+        // Blacklist the current access token
+        if (currentToken) {
+            await blacklistToken(currentToken, userId, 'logout');
         }
 
         res.json({

@@ -19,7 +19,7 @@ async function sendEmail({ to, subject, userName, token, url }) {
             throw new Error('To and subject are required for sending an email');
         }
         const mailOptions = {
-            from: `"Brevity" <${process.env.EMAIL_USER}>`,
+            from: `"BlyFt" <${process.env.EMAIL_USER}>`,
             to,
             subject,
         };
