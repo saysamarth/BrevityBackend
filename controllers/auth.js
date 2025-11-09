@@ -448,7 +448,7 @@ const googleAuth = async (req, res) => {
                 email: googleUser.email,
                 emailVerified: googleUser.emailVerified,
                 profileImage: { url: googleUser.picture },
-                password: Math.random().toString(36), // Dummy password for Google users
+                password: Math.random().toString(36),
             });
             await user.save();
         }

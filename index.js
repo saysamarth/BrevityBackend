@@ -11,6 +11,7 @@ const userRoutes = require('./routes/user');
 const bookmarkRoutes = require('./routes/bookmark');
 const newsRoutes = require('./routes/news');
 const passport = require('passport');
+const { connectToDB } = require('./config/db');
 
 // Import controllers
 const { verifyEmail } = require('./controllers/auth');
@@ -49,27 +50,18 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 // Database connection with better error handling for Vercel
-let isConnected = false;
-
-const connectDB = async () => {
-    if (isConnected) {
-        return;
-    }
-
+app.use(async (req, res, next) => {
     try {
-        await mongoose.connect(process.env.MONGODB_URI, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
-            serverSelectionTimeoutMS: 30000
-        });
-        isConnected = true;
-        console.log('Connected to MongoDB');
+        await connectToDB();   // cheap on warm invocations; reuses pool
+        return next();
     } catch (err) {
-        console.error('MongoDB connection error:', err);
+        return res.status(503).json({
+            success: false,
+            message: 'Database unavailable',
+            error: err.message,
+        });
     }
-};
-
-connectDB();
+});
 
 // Passport configuration
 require('./config/passport');
